@@ -5,7 +5,7 @@ def main():
      engine = get_engine()
      
      with engine.connect() as connection:
-          result = connection.execute.execute(text("SELECT version();"))
+          result = connection.execute(text("SELECT version();"))
           version = result.scalar()
      
      print("Database connection successful.")
