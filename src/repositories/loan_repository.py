@@ -24,7 +24,8 @@ def create_loan(
 ):
     engine = get_engine()
 
-    query = text("""
+    query = text(
+        """
         INSERT INTO loans (
             user_id,
             loan_name,
@@ -64,7 +65,8 @@ def create_loan(
             :status
         )
         RETURNING *;
-    """)
+        """
+    )
 
     with engine.begin() as connection:
         result = connection.execute(
@@ -91,3 +93,105 @@ def create_loan(
         )
 
         return result.mappings().one()
+
+
+def get_loan_by_id(loan_id: int):
+    engine = get_engine()
+
+    query = text(
+        """
+        SELECT *
+        FROM loans
+        WHERE id = :loan_id;
+        """
+    )
+
+    with engine.connect() as connection:
+        result = connection.execute(
+            query,
+            {"loan_id": loan_id},
+        )
+
+        return result.mappings().first()
+
+
+def get_loans_by_user(user_id: int):
+    engine = get_engine()
+
+    query = text(
+        """
+        SELECT *
+        FROM loans
+        WHERE user_id = :user_id
+        ORDER BY created_at DESC;
+        """
+    )
+
+    with engine.connect() as connection:
+        result = connection.execute(
+            query,
+            {"user_id": user_id},
+        )
+
+        return result.mappings().all()
+
+
+def archive_loan(loan_id: int):
+    engine = get_engine()
+
+    query = text(
+        """
+        UPDATE loans
+        SET
+            status = 'archived',
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = :loan_id
+        RETURNING *;
+        """
+    )
+
+    with engine.begin() as connection:
+        result = connection.execute(
+            query,
+            {"loan_id": loan_id},
+        )
+
+def update_loan(
+    loan_id: int,
+    loan_name: str,
+    lender: str,
+    interest_rate: float,
+    emi: float,
+    remaining_tenure_months: int,
+):
+    engine = get_engine()
+
+    query = text(
+        """
+        UPDATE loans
+        SET
+            loan_name = :loan_name,
+            lender = :lender,
+            interest_rate = :interest_rate,
+            emi = :emi,
+            remaining_tenure_months = :remaining_tenure_months,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = :loan_id
+        RETURNING *;
+        """
+    )
+
+    with engine.begin() as connection:
+        result = connection.execute(
+            query,
+            {
+                "loan_id": loan_id,
+                "loan_name": loan_name,
+                "lender": lender,
+                "interest_rate": interest_rate,
+                "emi": emi,
+                "remaining_tenure_months": remaining_tenure_months,
+            },
+        )
+
+        return result.mappings().first()
