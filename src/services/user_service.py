@@ -1,5 +1,8 @@
 import re
 
+from src.repositories.user_repository import get_all_users
+
+
 from src.repositories.user_repository import (
     create_user,
     get_user_by_email,
@@ -12,6 +15,8 @@ EMAIL_PATTERN = re.compile(
     r"^[^@\s]+@[^@\s]+\.[^@\s]+$"
 )
 
+def list_users() -> list[dict]:
+    return get_all_users() 
 
 def validate_user(name: str, email: str):
     name = name.strip()

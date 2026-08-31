@@ -138,6 +138,18 @@ def register_loan(
     if emi_due_day is not None and not 1 <= emi_due_day <= 31:
         raise ValueError("EMI due day must be between 1 and 31.")
 
+    if outstanding_principal > original_principal:
+        raise ValueError(
+            "Outstanding principal cannot exceed "
+            "original principal."
+    )
+    
+    if remaining_tenure_months > original_tenure_months:
+        raise ValueError(
+            "Remaining tenure cannot exceed "
+            "original tenure."
+    )
+    
     validate_loan(
         loan_type=loan_type,
         interest_type=interest_type,
@@ -181,3 +193,30 @@ def get_user_loans(user_id: int):
         raise ValueError("User ID must be positive.")
 
     return get_loans_by_user(user_id)
+
+def get_user_loan_summary(user_id: int) -> list[dict]:
+    if user_id <= 0:
+        raise ValueError("User ID must be positive.")
+
+    loans = get_loans_by_user(user_id)
+
+    return [
+        {
+            "id": loan["id"],
+            "loan_name": loan["loan_name"],
+            "loan_type": loan["loan_type"],
+            "lender": loan["lender"],
+            "outstanding_principal": float(
+                loan["outstanding_principal"]
+            ),
+            "interest_rate": float(
+                loan["interest_rate"]
+            ),
+            "emi": float(loan["emi"]),
+            "remaining_tenure_months": loan[
+                "remaining_tenure_months"
+            ],
+            "status": loan["status"],
+        }
+        for loan in loans
+    ]

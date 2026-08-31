@@ -102,3 +102,43 @@ def delete_user(user_id: int):
         )
 
         return result.scalar()
+    
+def get_user_by_id(user_id: int) -> dict | None:
+    engine = get_engine()
+
+    with engine.connect() as connection:
+        result = connection.execute(
+            text(
+                """
+                SELECT
+                    id,
+                    name,
+                    email,
+                    created_at
+                FROM users
+                WHERE id = :user_id;
+                """
+            ),
+            {"user_id": user_id},
+        ).mappings().first()
+
+    return dict(result) if result else None
+
+def get_all_users() -> list[dict]:
+    engine = get_engine()
+
+    with engine.connect() as connection:
+        result = connection.execute(
+            text(
+                """
+                SELECT
+                    id,
+                    name,
+                    email
+                FROM users
+                ORDER BY name;
+                """
+            )
+        ).mappings().all()
+
+    return [dict(row) for row in result]

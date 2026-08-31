@@ -92,3 +92,68 @@ def test_register_loan_rejects_invalid_amounts():
             remaining_tenure_months=48,
             loan_start_date="2025-01-01",
         )
+def test_list_users():
+    from src.services.user_service import list_users
+
+    users = list_users()
+
+    assert isinstance(users, list)
+
+def test_register_loan_rejects_excess_outstanding():
+    from src.services.loan_service import register_loan
+
+    try:
+        register_loan(
+            user_id=67,
+            loan_name="Invalid Loan",
+            loan_type="car",
+            lender="Test Bank",
+            original_principal=500000,
+            outstanding_principal=600000,
+            interest_rate=10,
+            interest_type="fixed",
+            emi=12000,
+            original_tenure_months=60,
+            remaining_tenure_months=48,
+            loan_start_date="2025-01-01",
+            emi_due_day=5,
+            processing_charges=0,
+            prepayment_rules=None,
+            prepayment_charges=0,
+        )
+        assert False
+    except ValueError as error:
+        assert str(error) == (
+            "Outstanding principal cannot exceed "
+            "original principal."
+        )
+
+
+def test_register_loan_rejects_excess_remaining_tenure():
+    from src.services.loan_service import register_loan
+
+    try:
+        register_loan(
+            user_id=67,
+            loan_name="Invalid Loan",
+            loan_type="car",
+            lender="Test Bank",
+            original_principal=500000,
+            outstanding_principal=400000,
+            interest_rate=10,
+            interest_type="fixed",
+            emi=12000,
+            original_tenure_months=48,
+            remaining_tenure_months=60,
+            loan_start_date="2025-01-01",
+            emi_due_day=5,
+            processing_charges=0,
+            prepayment_rules=None,
+            prepayment_charges=0,
+        )
+        assert False
+    except ValueError as error:
+        assert str(error) == (
+            "Remaining tenure cannot exceed "
+            "original tenure."
+        )
