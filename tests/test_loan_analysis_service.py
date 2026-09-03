@@ -19,10 +19,25 @@ def test_loan_analysis_rejects_missing_loan():
         assert str(error) == "Loan not found."
 
 
-def test_loan_analysis_returns_current_loan_data():
-    result = get_loan_analysis(130)
+def test_loan_analysis_returns_current_loan_data(monkeypatch):
+    loan = {
+        "id": 1,
+        "loan_name": "Test Loan",
+        "interest_rate": 8.0,
+        "interest_type": "fixed",
+        "emi": 11500.0,
+        "remaining_tenure_months": 47,
+        "outstanding_principal": 391166.67,
+    }
 
-    assert result["loan_id"] == 130
+    monkeypatch.setattr(
+        "src.services.loan_analysis_service.get_loan_by_id",
+        lambda loan_id: loan,
+    )
+
+    result = get_loan_analysis(1)
+
+    assert result["loan_id"] == 1
     assert result["interest_rate"] == 8.0
     assert result["interest_type"] == "fixed"
     assert result["emi"] == 11500.0
@@ -30,8 +45,23 @@ def test_loan_analysis_returns_current_loan_data():
     assert result["outstanding_principal"] == 391166.67
 
 
-def test_loan_analysis_returns_remaining_analysis():
-    result = get_loan_analysis(130)
+def test_loan_analysis_returns_remaining_analysis(monkeypatch):
+    loan = {
+        "id": 1,
+        "loan_name": "Test Loan",
+        "interest_rate": 8.0,
+        "interest_type": "fixed",
+        "emi": 11500.0,
+        "remaining_tenure_months": 47,
+        "outstanding_principal": 391166.67,
+    }
+
+    monkeypatch.setattr(
+        "src.services.loan_analysis_service.get_loan_by_id",
+        lambda loan_id: loan,
+    )
+
+    result = get_loan_analysis(1)
 
     analysis = result["analysis"]
 
