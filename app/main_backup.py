@@ -1,19 +1,6 @@
-import sys
-from pathlib import Path
-
-# Add project root (D:\LoanWise AI) to Python import path
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
-
-if str(PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(PROJECT_ROOT))
-
-
 import streamlit as st
 from datetime import date
 
-from src.services.user_service import (
-    list_users,
-)
 from src.services.dashboard_service import get_dashboard_data
 
 from src.services.loan_service import (
@@ -22,38 +9,27 @@ from src.services.loan_service import (
     close_user_loan,
     update_loan_details,
 )
-
+from src.services.user_service import list_users
 from src.services.recommendation_service import (
     recommend_prepayment,
 )
-
 from src.services.payment_service import (
     record_loan_payment,
     get_loan_payment_history,
 )
-
 from src.services.prepayment_service import (
     record_loan_prepayment,
     get_loan_prepayment_history,
 )
-
+from src.utils.amount_words import amount_to_words
 from src.calculations.loan_analysis import (
     analyze_remaining_loan,
 )
 
-from src.calculations.prepayment import (
-    analyze_prepayment,
-)
-
 from src.services.loan_activity_service import (
-    get_combined_loan_activity,
+    get_loan_activity,
+    get_loan_activity_summary,
 )
-
-from src.utils.amount_words import amount_to_words
-
-# ===================================================================
-# PAGE CONFIGURATION
-# ===================================================================
 
 st.set_page_config(
     page_title="LoanWise AI",
@@ -66,9 +42,9 @@ st.title("LoanWise AI")
 st.caption("Personal Loan & Debt Management")
 
 
-# ===================================================================
-# SIDEBAR - USER SELECTION
-# ===================================================================
+# -------------------------------------------------------------------
+# Sidebar - User
+# -------------------------------------------------------------------
 
 st.sidebar.header("User")
 
@@ -92,22 +68,16 @@ else:
     user_id = None
 
 
-# ===================================================================
-# ADD LOAN
-# ===================================================================
+# -------------------------------------------------------------------
+# Add Loan
+# -------------------------------------------------------------------
 
 st.header("Add Loan")
 
 with st.form("add_loan_form"):
-
     col1, col2 = st.columns(2)
 
-    # ---------------------------------------------------------------
-    # Loan Information
-    # ---------------------------------------------------------------
-
     with col1:
-
         loan_name = st.text_input(
             "Loan Name",
             placeholder="e.g. Car Loan",
@@ -166,12 +136,7 @@ with st.form("add_loan_form"):
             ],
         )
 
-    # ---------------------------------------------------------------
-    # Repayment Information
-    # ---------------------------------------------------------------
-
     with col2:
-
         emi = st.number_input(
             "EMI",
             min_value=0.0,
@@ -231,14 +196,12 @@ with st.form("add_loan_form"):
     )
 
 
-# ===================================================================
-# SAVE LOAN
-# ===================================================================
+# -------------------------------------------------------------------
+# Save Loan
+# -------------------------------------------------------------------
 
 if submitted and user_id is not None:
-
     try:
-
         loan = register_loan(
             user_id=user_id,
             loan_name=loan_name,
@@ -273,16 +236,14 @@ if submitted and user_id is not None:
         )
 
 
-# ===================================================================
-# PORTFOLIO DASHBOARD
-# ===================================================================
+# -------------------------------------------------------------------
+# Portfolio Dashboard
+# -------------------------------------------------------------------
 
 st.header("Portfolio Dashboard")
 
 if user_id is not None:
-
     try:
-
         data = get_dashboard_data(user_id)
 
         portfolio = data["portfolio"]
@@ -321,20 +282,18 @@ if user_id is not None:
         st.subheader("Your Loans")
 
         if loans:
-
             st.dataframe(
                 loans,
                 width="stretch",
             )
 
-            # =======================================================
-            # LOAN ANALYSIS
-            # =======================================================
+            # -------------------------------------------------------
+            # Loan Analysis
+            # -------------------------------------------------------
 
             st.subheader("Loan Analysis")
 
             for loan in loans:
-
                 analysis = analyze_remaining_loan(
                     outstanding_principal=loan[
                         "outstanding_principal"
@@ -350,10 +309,7 @@ if user_id is not None:
                 with st.expander(
                     loan["loan_name"]
                 ):
-
-                    col1, col2, col3, col4 = (
-                        st.columns(4)
-                    )
+                    col1, col2, col3 = st.columns(3)
 
                     col1.metric(
                         "Outstanding",
@@ -366,18 +322,13 @@ if user_id is not None:
                     )
 
                     col3.metric(
-                        "Remaining Repayment",
-                        f"Rs. {analysis['remaining_repayment']:,.2f}",
-                    )
-
-                    col4.metric(
                         "Remaining Tenure",
                         f"{loan['remaining_tenure_months']} months",
                     )
 
-            # =======================================================
-            # MANAGE LOANS
-            # =======================================================
+            # -------------------------------------------------------
+            # Manage Loans
+            # -------------------------------------------------------
 
             st.subheader("Manage Loans")
 
@@ -402,17 +353,15 @@ if user_id is not None:
                 if loan["id"] == selected_loan_id
             )
 
-            # =======================================================
-            # ARCHIVE LOAN
-            # =======================================================
+            # -------------------------------------------------------
+            # Archive Loan
+            # -------------------------------------------------------
 
             if st.button(
                 "Archive Selected Loan",
                 width="stretch",
             ):
-
                 try:
-
                     archive_user_loan(
                         selected_loan_id
                     )
@@ -431,17 +380,15 @@ if user_id is not None:
                         f"Unable to archive loan: {error}"
                     )
 
-            # =======================================================
-            # CLOSE LOAN
-            # =======================================================
+            # -------------------------------------------------------
+            # Close Loan
+            # -------------------------------------------------------
 
             if st.button(
                 "Close Selected Loan",
                 width="stretch",
             ):
-
                 try:
-
                     close_user_loan(
                         selected_loan_id
                     )
@@ -460,26 +407,23 @@ if user_id is not None:
                         f"Unable to close loan: {error}"
                     )
 
-            # =======================================================
-            # EDIT LOAN PROFILE
-            # =======================================================
+            # -------------------------------------------------------
+            # Edit Loan Profile
+            # -------------------------------------------------------
 
             st.subheader("Edit Loan Profile")
 
             with st.expander(
                 "Edit Selected Loan"
             ):
-
                 with st.form(
                     "edit_loan_form"
                 ):
-
                     edit_col1, edit_col2 = (
                         st.columns(2)
                     )
 
                     with edit_col1:
-
                         edit_loan_name = (
                             st.text_input(
                                 "Loan Name",
@@ -498,21 +442,14 @@ if user_id is not None:
                             "other",
                         ]
 
-                        current_loan_type = (
-                            selected_loan[
-                                "loan_type"
-                            ]
-                        )
-
-                        if current_loan_type not in loan_types:
-                            current_loan_type = "other"
-
                         edit_loan_type = (
                             st.selectbox(
                                 "Loan Type",
                                 loan_types,
                                 index=loan_types.index(
-                                    current_loan_type
+                                    selected_loan[
+                                        "loan_type"
+                                    ]
                                 ),
                             )
                         )
@@ -531,24 +468,14 @@ if user_id is not None:
                             "floating",
                         ]
 
-                        current_interest_type = (
-                            selected_loan[
-                                "interest_type"
-                            ]
-                        )
-
-                        if (
-                            current_interest_type
-                            not in interest_types
-                        ):
-                            current_interest_type = "fixed"
-
                         edit_interest_type = (
                             st.selectbox(
                                 "Interest Type",
                                 interest_types,
                                 index=interest_types.index(
-                                    current_interest_type
+                                    selected_loan[
+                                        "interest_type"
+                                    ]
                                 ),
                             )
                         )
@@ -567,7 +494,6 @@ if user_id is not None:
                         )
 
                     with edit_col2:
-
                         edit_emi = (
                             st.number_input(
                                 "EMI",
@@ -670,9 +596,7 @@ if user_id is not None:
                     )
 
                 if save_changes:
-
                     try:
-
                         update_loan_details(
                             loan_id=selected_loan_id,
                             loan_name=edit_loan_name,
@@ -712,9 +636,9 @@ if user_id is not None:
                             f"Unable to update loan: {error}"
                         )
 
-            # =======================================================
-            # RECORD EMI PAYMENT
-            # =======================================================
+            # -------------------------------------------------------
+            # Record EMI Payment
+            # -------------------------------------------------------
 
             st.subheader(
                 "Record EMI Payment"
@@ -723,7 +647,6 @@ if user_id is not None:
             with st.expander(
                 "Record Payment"
             ):
-
                 payment_date = st.date_input(
                     "Payment Date",
                     value=date.today(),
@@ -736,7 +659,6 @@ if user_id is not None:
                 )
 
                 if extra_payment > 0:
-
                     st.caption(
                         amount_to_words(
                             extra_payment
@@ -751,14 +673,14 @@ if user_id is not None:
                     "Record EMI Payment",
                     width="stretch",
                 ):
-
                     try:
-
-                        result = record_loan_payment(
-                            loan_id=selected_loan_id,
-                            payment_date=payment_date,
-                            extra_payment=extra_payment,
-                            late_payment=late_payment,
+                        result = (
+                            record_loan_payment(
+                                loan_id=selected_loan_id,
+                                payment_date=payment_date,
+                                extra_payment=extra_payment,
+                                late_payment=late_payment,
+                            )
                         )
 
                         calculation = result[
@@ -798,16 +720,15 @@ if user_id is not None:
                             f"Unable to record payment: {error}"
                         )
 
-            # =======================================================
-            # PAYMENT HISTORY
-            # =======================================================
+            # -------------------------------------------------------
+            # Payment History
+            # -------------------------------------------------------
 
             st.subheader(
                 "Payment History"
             )
 
             try:
-
                 payments = (
                     get_loan_payment_history(
                         selected_loan_id
@@ -815,14 +736,11 @@ if user_id is not None:
                 )
 
                 if payments:
-
                     st.dataframe(
                         payments,
                         width="stretch",
                     )
-
                 else:
-
                     st.info(
                         "No payments recorded yet."
                     )
@@ -830,281 +748,124 @@ if user_id is not None:
             except ValueError as error:
                 st.error(str(error))
 
-            except Exception as error:
-                st.error(
-                    f"Unable to load payment history: {error}"
-                )
-
-            # =======================================================
-            # RECORD PREPAYMENT
-            # =======================================================
+            # -------------------------------------------------------
+            # Record Prepayment
+            # -------------------------------------------------------
 
             st.subheader(
                 "Record Prepayment"
             )
 
-            outstanding_balance = float(
-                selected_loan[
-                    "outstanding_principal"
-                ]
-            )
-
             with st.expander(
                 "Record Prepayment"
             ):
-
-                st.metric(
-                    "Current Outstanding",
-                    f"Rs. {outstanding_balance:,.2f}",
+                prepayment_date = (
+                    st.date_input(
+                        "Prepayment Date",
+                        value=date.today(),
+                        key="prepayment_date",
+                    )
                 )
 
-                st.caption(
-                    "You can prepay any amount up to the current "
-                    "outstanding principal."
-                )
-
-                prepayment_date = st.date_input(
-                    "Prepayment Date",
-                    value=date.today(),
-                    key="prepayment_date",
-                )
-
-                prepayment_amount = st.number_input(
-                    "Prepayment Amount",
-                    min_value=0.0,
-                    max_value=outstanding_balance,
-                    step=1000.0,
-                    value=0.0,
-                    key="prepayment_amount",
+                prepayment_amount = (
+                    st.number_input(
+                        "Prepayment Amount",
+                        min_value=0.0,
+                        step=1000.0,
+                        value=0.0,
+                        key="prepayment_amount",
+                    )
                 )
 
                 if prepayment_amount > 0:
-
                     st.caption(
                         amount_to_words(
                             prepayment_amount
                         )
                     )
 
-                    # ------------------------------------------------
-                    # PREPAYMENT PREVIEW
-                    # ------------------------------------------------
-
-                    try:
-
-                        preview = analyze_prepayment(
-                            outstanding_principal=(
-                                outstanding_balance
-                            ),
-                            annual_interest_rate=float(
-                                selected_loan[
-                                    "interest_rate"
-                                ]
-                            ),
-                            remaining_tenure_months=int(
-                                selected_loan[
-                                    "remaining_tenure_months"
-                                ]
-                            ),
-                            prepayment_amount=(
-                                prepayment_amount
-                            ),
-                        )
-
-                        st.divider()
-
-                        st.subheader(
-                            "Prepayment Impact"
-                        )
-
-                        col1, col2, col3 = (
-                            st.columns(3)
-                        )
-
-                        col1.metric(
-                            "Amount",
-                            f"Rs. {prepayment_amount:,.2f}",
-                        )
-
-                        col2.metric(
-                            "Interest Saved",
-                            f"Rs. {preview['interest_saved']:,.2f}",
-                        )
-
-                        col3.metric(
-                            "New Outstanding",
-                            f"Rs. {preview['principal_after']:,.2f}",
-                        )
-
-                        st.info(
-                            f"Estimated tenure reduction: "
-                            f"{preview['tenure_reduced_months']} months"
-                        )
-
-                    except ValueError as error:
-                        st.error(str(error))
-
-                    except Exception as error:
-                        st.error(
-                            f"Unable to calculate prepayment impact: {error}"
-                        )
-
-                st.divider()
-
                 if st.button(
                     "Record Prepayment",
                     key="record_prepayment",
                     width="stretch",
-                    disabled=prepayment_amount <= 0,
                 ):
-
-                    try:
-
-                        result = record_loan_prepayment(
-                            loan_id=selected_loan_id,
-                            payment_date=prepayment_date,
-                            prepayment_amount=prepayment_amount,
-                        )
-
-                        analysis = result[
-                            "analysis"
-                        ]
-
-                        st.success(
-                            "Prepayment recorded successfully."
-                        )
-
-                        col1, col2, col3 = (
-                            st.columns(3)
-                        )
-
-                        col1.metric(
-                            "Principal Before",
-                            f"Rs. {analysis['principal_before']:,.2f}",
-                        )
-
-                        col2.metric(
-                            "Principal After",
-                            f"Rs. {analysis['principal_after']:,.2f}",
-                        )
-
-                        col3.metric(
-                            "Interest Saved",
-                            f"Rs. {analysis['interest_saved']:,.2f}",
-                        )
-
-                        st.info(
-                            f"Tenure reduction: "
-                            f"{analysis['tenure_reduced_months']} months"
-                        )
-
-                        st.rerun()
-
-                    except ValueError as error:
-                        st.error(str(error))
-
-                    except Exception as error:
+                    if prepayment_amount <= 0:
                         st.error(
-                            f"Unable to record prepayment: {error}"
+                            "Prepayment amount must be greater than zero."
                         )
 
-            # =======================================================
-            # COMBINED LOAN ACTIVITY
-            # =======================================================
-
-            st.subheader(
-                "Loan Activity"
-            )
-
-            try:
-
-                activities = (
-                    get_combined_loan_activity(
-                        selected_loan_id
-                    )
-                )
-
-                if activities:
-
-                    activity_rows = []
-
-                    for activity in activities:
-
-                        activity_rows.append(
-                            {
-                                "Date": activity[
-                                    "date"
-                                ],
-                                "Type": activity[
-                                    "type"
-                                ],
-                                "Amount": (
-                                    f"Rs. "
-                                    f"{activity['amount']:,.2f}"
-                                ),
-                                "Principal Paid": (
-                                    f"Rs. "
-                                    f"{activity['principal_paid']:,.2f}"
-                                ),
-                                "Interest Paid": (
-                                    f"Rs. "
-                                    f"{activity['interest_paid']:,.2f}"
-                                ),
-                                "Extra Payment": (
-                                    f"Rs. "
-                                    f"{activity['extra_payment']:,.2f}"
-                                ),
-                                "Interest Saved": (
-                                    f"Rs. "
-                                    f"{activity['interest_saved']:,.2f}"
-                                ),
-                                "Outstanding Balance": (
-                                    f"Rs. "
-                                    f"{activity['outstanding_balance']:,.2f}"
-                                ),
-                                "Tenure Reduced": (
-                                    f"{activity['tenure_reduced_months']} months"
-                                ),
-                                "Late Payment": (
-                                    "Yes"
-                                    if activity[
-                                        "late_payment"
-                                    ]
-                                    else "No"
-                                ),
-                            }
+                    elif (
+                        prepayment_amount
+                        > selected_loan[
+                            "outstanding_principal"
+                        ]
+                    ):
+                        st.error(
+                            "Prepayment cannot exceed "
+                            "the outstanding principal."
                         )
 
-                    st.dataframe(
-                        activity_rows,
-                        width="stretch",
-                        hide_index=True,
-                    )
+                    else:
+                        try:
+                            result = (
+                                record_loan_prepayment(
+                                    loan_id=selected_loan_id,
+                                    payment_date=prepayment_date,
+                                    prepayment_amount=prepayment_amount,
+                                )
+                            )
 
-                else:
+                            analysis = result[
+                                "analysis"
+                            ]
 
-                    st.info(
-                        "No loan activity recorded yet."
-                    )
+                            st.success(
+                                "Prepayment recorded successfully."
+                            )
 
-            except ValueError as error:
-                st.error(str(error))
+                            col1, col2, col3 = (
+                                st.columns(3)
+                            )
 
-            except Exception as error:
-                st.error(
-                    f"Unable to load loan activity: {error}"
-                )
+                            col1.metric(
+                                "Principal Before",
+                                f"Rs. {analysis['principal_before']:,.2f}",
+                            )
 
-            # =======================================================
-            # PREPAYMENT HISTORY
-            # =======================================================
+                            col2.metric(
+                                "Principal After",
+                                f"Rs. {analysis['principal_after']:,.2f}",
+                            )
+
+                            col3.metric(
+                                "Interest Saved",
+                                f"Rs. {analysis['interest_saved']:,.2f}",
+                            )
+
+                            st.info(
+                                f"Tenure reduction: "
+                                f"{analysis['tenure_reduced_months']} months"
+                            )
+
+                            st.rerun()
+
+                        except ValueError as error:
+                            st.error(str(error))
+
+                        except Exception as error:
+                            st.error(
+                                f"Unable to record prepayment: {error}"
+                            )
+
+                        # -------------------------------------------------------
+            # Prepayment History
+            # -------------------------------------------------------
 
             st.subheader(
                 "Prepayment History"
             )
 
             try:
-
                 prepayments = (
                     get_loan_prepayment_history(
                         selected_loan_id
@@ -1112,14 +873,11 @@ if user_id is not None:
                 )
 
                 if prepayments:
-
                     st.dataframe(
                         prepayments,
                         width="stretch",
                     )
-
                 else:
-
                     st.info(
                         "No prepayments recorded yet."
                     )
@@ -1128,145 +886,86 @@ if user_id is not None:
                 st.error(
                     f"Unable to load prepayment history: {error}"
                 )
-
             except Exception as error:
                 st.error(
                     f"Unable to load prepayment history: {error}"
                 )
 
         else:
-
             st.info(
                 "No loans found for this user."
             )
 
     except Exception as error:
-
         st.error(
             f"Unable to load dashboard: {error}"
         )
+        
+        # -------------------------------------------------------
+        # Loan Activity Summary
+        # -------------------------------------------------------
 
-
-# ===================================================================
-# PREPAYMENT RECOMMENDATION
-# ===================================================================
-
-st.header(
-    "Prepayment Recommendation"
-)
-
-if user_id is not None:
-
-    recommendation_amount = st.number_input(
-        "Available Prepayment Amount",
-        min_value=0.0,
-        step=1000.0,
-        value=0.0,
-        key="recommendation_prepayment_amount",
-    )
-
-    if recommendation_amount > 0:
-
-        st.caption(
-            amount_to_words(
-                recommendation_amount
-            )
+        st.subheader(
+            "Loan Activity Summary"
         )
 
-    if st.button(
-        "Analyze Prepayment",
-        width="stretch",
-    ):
-
         try:
-
-            recommendation = recommend_prepayment(
-                user_id=user_id,
-                prepayment_amount=recommendation_amount,
+            activity_summary = (
+                get_loan_activity_summary(
+                    selected_loan_id
+                )
             )
 
-            recommended_loan = (
-                recommendation[
-                    "recommended_loan"
-                ]
-            )
+            col1, col2, col3 = st.columns(3)
 
-            st.success(
-                "Recommended loan for prepayment:"
-            )
+            with col1:
+                    st.metric(
+                        "Payments",
+                        activity_summary[
+                            "payment_count"
+                        ],
+                    )
 
-            st.subheader(
-                recommended_loan[
-                    "loan_name"
-                ]
-            )
+            with col2:
+                    st.metric(
+                        "Principal Paid",
+                        f"Rs. {activity_summary['total_principal_paid']:,.2f}",
+                    )
 
-            col1, col2, col3 = (
-                st.columns(3)
-            )
+            with col3:
+                    st.metric(
+                        "Interest Paid",
+                        f"Rs. {activity_summary['total_interest_paid']:,.2f}",
+                    )
 
-            col1.metric(
-                "Interest Rate",
-                f"{recommended_loan['interest_rate']:.2f}%",
-            )
+            st.metric(
+                    "Current Outstanding",
+                    f"Rs. {activity_summary['latest_outstanding_balance']:,.2f}",
+                )
 
-            col2.metric(
-                "Interest Saved",
-                f"Rs. {recommended_loan['interest_saved']:,.2f}",
-            )
+            activity = get_loan_activity(
+                    selected_loan_id
+                )
 
-            col3.metric(
-                "Tenure Reduced",
-                f"{recommended_loan['tenure_reduced_months']} months",
-            )
+            if activity:
+                    st.subheader(
+                        "Loan Activity"
+                    )
 
-            # -------------------------------------------------------
-            # PREPAYMENT COMPARISON
-            # -------------------------------------------------------
-
-            st.subheader(
-                "Prepayment Comparison"
-            )
-
-            comparison = [
-                {
-                    "Loan": candidate[
-                        "loan_name"
-                    ],
-                    "Interest Rate": (
-                        f"{candidate['interest_rate']:.2f}%"
-                    ),
-                    "Prepayment": (
-                        f"Rs. "
-                        f"{candidate['prepayment_amount']:,.2f}"
-                    ),
-                    "Interest Saved": (
-                        f"Rs. "
-                        f"{candidate['interest_saved']:,.2f}"
-                    ),
-                    "Tenure Reduced": (
-                        f"{candidate['tenure_reduced_months']} months"
-                    ),
-                }
-                for candidate in recommendation[
-                    "candidates"
-                ]
-            ]
-
-            st.dataframe(
-                comparison,
-                width="stretch",
-                hide_index=True,
-            )
+                    st.dataframe(
+                        activity,
+                        width="stretch",
+                    )
+            else:
+                st.info(
+                        "No loan activity recorded yet."
+                    )
 
         except ValueError as error:
-
-            st.error(
-                str(error)
-            )
-
+                st.error(
+                    f"Unable to load loan activity: {error}"
+                )
         except Exception as error:
-
-            st.error(
-                f"Unable to analyze prepayment: {error}"
-            )
+                st.error(
+                    f"Unable to load loan activity: {error}"
+                )

@@ -157,3 +157,42 @@ def test_register_loan_rejects_excess_remaining_tenure():
             "Remaining tenure cannot exceed "
             "original tenure."
         )
+def test_recommend_prepayment_rejects_invalid_amount():
+    from src.services.recommendation_service import (
+        recommend_prepayment,
+    )
+
+    try:
+        recommend_prepayment(
+            user_id=67,
+            prepayment_amount=0,
+        )
+        assert False
+    except ValueError as error:
+        assert str(error) == (
+            "Prepayment amount must be greater than zero."
+        )
+        
+def test_archive_user_loan():
+    from src.services.loan_service import (
+        archive_user_loan,
+    )
+
+    try:
+        archive_user_loan(0)
+        assert False
+    except ValueError as error:
+        assert str(error) == "Loan ID must be positive."
+
+def test_close_user_loan_rejects_invalid_id():
+    from src.services.loan_service import (
+        close_user_loan,
+    )
+
+    try:
+        close_user_loan(0)
+        assert False
+    except ValueError as error:
+        assert str(error) == (
+            "Loan ID must be positive."
+        )

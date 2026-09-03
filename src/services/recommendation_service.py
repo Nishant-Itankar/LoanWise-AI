@@ -15,6 +15,11 @@ def recommend_prepayment(
             "User ID must be positive."
         )
 
+    if prepayment_amount <= 0:
+        raise ValueError(
+            "Prepayment amount must be greater than zero."
+        )
+
     loans = get_loans_by_user(user_id)
 
     active_loans = [

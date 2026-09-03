@@ -57,13 +57,19 @@ def analyze_prepayment(
         )
 
     current_interest = sum(
-        Decimal(str(row["interest"]))
-        for row in current_schedule
+        (
+            Decimal(str(row["interest"]))
+            for row in current_schedule
+        ),
+        Decimal("0"),
     )
 
     new_interest = sum(
-        Decimal(str(row["interest"]))
-        for row in new_schedule
+        (
+            Decimal(str(row["interest"]))
+            for row in new_schedule
+        ),
+        Decimal("0"),
     )
 
     interest_saved = current_interest - new_interest
