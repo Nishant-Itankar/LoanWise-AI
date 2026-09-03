@@ -51,6 +51,13 @@ from src.services.loan_activity_service import (
 
 from src.utils.amount_words import amount_to_words
 
+from src.services.ai_advisor_service import (
+    build_ai_advisor_prompt,
+)
+from src.services.ai_provider_service import (
+    generate_ai_response,
+)
+
 # ===================================================================
 # PAGE CONFIGURATION
 # ===================================================================
@@ -1270,3 +1277,78 @@ if user_id is not None:
             st.error(
                 f"Unable to analyze prepayment: {error}"
             )
+# ===================================================================
+# AI FINANCIAL ADVISOR
+# ===================================================================
+
+st.header("🤖 AI Financial Advisor")
+
+if user_id is not None:
+
+    st.caption(
+        "Ask questions about your loans, repayment strategy, "
+        "prepayment, interest costs, or debt management."
+    )
+
+    ai_question = st.text_area(
+        "Ask LoanWise AI",
+        placeholder=(
+            "Example: Which loan should I prioritize "
+            "for prepayment?"
+        ),
+        height=100,
+        key="ai_question",
+    )
+
+    if st.button(
+        "Ask AI",
+        width="stretch",
+        key="ask_ai",
+    ):
+
+        if not ai_question or not ai_question.strip():
+
+            st.warning(
+                "Please enter a question."
+            )
+
+        else:
+
+            try:
+
+                with st.spinner(
+                    "LoanWise AI is analyzing your financial data..."
+                ):
+
+                    prompt = build_ai_advisor_prompt(
+                        user_id=user_id,
+                        question=ai_question,
+                    )
+
+                    answer = generate_ai_response(
+                        prompt
+                    )
+
+                st.subheader(
+                    "LoanWise AI"
+                )
+
+                st.write(answer)
+
+            except ValueError as error:
+
+                st.error(
+                    str(error)
+                )
+
+            except Exception as error:
+
+                st.error(
+                    f"Unable to generate AI response: {error}"
+                )
+
+else:
+
+    st.info(
+        "Select a user to use the AI Financial Advisor."
+    )
