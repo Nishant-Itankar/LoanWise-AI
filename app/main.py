@@ -21,6 +21,8 @@ from src.services.loan_service import (
     archive_user_loan,
     close_user_loan,
     update_loan_details,
+    restore_user_loan,
+    force_delete_user_loan,
 )
 
 from src.services.recommendation_service import (

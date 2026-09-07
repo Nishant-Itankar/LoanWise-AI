@@ -8,6 +8,8 @@ from src.repositories.loan_repository import (
     archive_loan,
     close_loan,
     find_active_duplicate_loan,
+    restore_loan,
+    delete_loan_permanently,
 )
 
 
@@ -373,3 +375,39 @@ def close_user_loan(loan_id: int):
         )
 
     return close_loan(loan_id)
+
+def restore_user_loan(loan_id: int):
+    if loan_id <= 0:
+        raise ValueError(
+            "Loan ID must be positive."
+        )
+
+    loan = get_loan_by_id(loan_id)
+
+    if not loan:
+        raise ValueError(
+            "Loan not found."
+        )
+
+    if loan["status"] != "archived":
+        raise ValueError(
+            "Only archived loans can be restored."
+        )
+
+    return restore_loan(loan_id)
+
+
+def force_delete_user_loan(loan_id: int):
+    if loan_id <= 0:
+        raise ValueError(
+            "Loan ID must be positive."
+        )
+
+    loan = get_loan_by_id(loan_id)
+
+    if not loan:
+        raise ValueError(
+            "Loan not found."
+        )
+
+    return delete_loan_permanently(loan_id)

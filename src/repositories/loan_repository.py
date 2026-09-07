@@ -319,3 +319,75 @@ def update_loan_balance(
         )
 
         return result.mappings().first()
+    
+def restore_loan(loan_id: int):
+    engine = get_engine()
+
+    query = text(
+        """
+        UPDATE loans
+        SET
+            status = 'active',
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = :loan_id
+          AND status = 'archived'
+        RETURNING *;
+        """
+    )
+
+    with engine.begin() as connection:
+        result = connection.execute(
+            query,
+            {"loan_id": loan_id},
+        )
+
+        return result.mappings().first()
+
+
+def delete_loan_permanently(loan_id: int):
+    engine = get_engine()
+
+    with engine.begin() as connection:
+        # Delete dependent records first.
+        connection.execute(
+            text(
+                """
+                DELETE FROM interest_rate_history
+                WHERE loan_id = :loan_id;
+                """
+            ),
+            {"loan_id": loan_id},
+        )
+
+        connection.execute(
+            text(
+                """
+                DELETE FROM loan_payments
+                WHERE loan_id = :loan_id;
+                """
+            ),
+            {"loan_id": loan_id},
+        )
+
+        connection.execute(
+            text(
+                """
+                DELETE FROM prepayments
+                WHERE loan_id = :loan_id;
+                """
+            ),
+            {"loan_id": loan_id},
+        )
+
+        result = connection.execute(
+            text(
+                """
+                DELETE FROM loans
+                WHERE id = :loan_id
+                RETURNING *;
+                """
+            ),
+            {"loan_id": loan_id},
+        )
+
+        return result.mappings().first()
