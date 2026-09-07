@@ -11,6 +11,21 @@ from src.repositories.loan_repository import (
 )
 
 
+VALID_LOAN_TYPES = {
+    "home",
+    "car",
+    "personal",
+    "education",
+    "business",
+    "other",
+}
+
+VALID_INTEREST_TYPES = {
+    "fixed",
+    "floating",
+}
+
+
 def update_loan_details(
     loan_id: int,
     loan_name: str,
@@ -97,20 +112,6 @@ def update_loan_details(
         prepayment_charges=prepayment_charges,
     )
 
-VALID_LOAN_TYPES = {
-    "home",
-    "car",
-    "personal",
-    "education",
-    "business",
-    "other",
-}
-
-VALID_INTEREST_TYPES = {
-    "fixed",
-    "floating",
-}
-
 
 def validate_loan(
     loan_type: str,
@@ -123,10 +124,14 @@ def validate_loan(
     remaining_tenure_months: int,
 ):
     if loan_type not in VALID_LOAN_TYPES:
-        raise ValueError("Invalid loan type.")
+        raise ValueError(
+            "Invalid loan type."
+        )
 
     if interest_type not in VALID_INTEREST_TYPES:
-        raise ValueError("Invalid interest type.")
+        raise ValueError(
+            "Invalid interest type."
+        )
 
     if original_principal <= 0:
         raise ValueError(
@@ -336,6 +341,7 @@ def archive_user_loan(loan_id: int):
         )
 
     return archive_loan(loan_id)
+
 
 def close_user_loan(loan_id: int):
     if loan_id <= 0:
